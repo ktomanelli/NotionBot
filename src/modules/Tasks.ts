@@ -38,17 +38,6 @@ class Tasks extends NotionDatabase {
         }
         await this.updatePage(taskId, options)
     }
-
-    private async getPage(page_id: string){
-        const page = await this.client.pages.retrieve({page_id});
-        return page;
-    }
-
-    private async updatePage(page_id:string, options:any){
-        const page = await this.client.pages.update({page_id,properties:options});
-        return page;
-    }
-
 }
 
 export default Tasks;

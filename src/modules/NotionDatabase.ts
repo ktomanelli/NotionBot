@@ -31,6 +31,16 @@ class NotionDatabase{
             throw e;
         }
     }
+
+    protected async getPage(page_id: string){
+        const page = await this.client.pages.retrieve({page_id});
+        return page;
+    }
+
+    protected async updatePage(page_id:string, options:any){
+        const page = await this.client.pages.update({page_id,properties:options});
+        return page;
+    }
 }
 
 export default NotionDatabase;
