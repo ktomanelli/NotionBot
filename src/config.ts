@@ -7,18 +7,69 @@ const billsDatabaseId = process.env.NOTION_BILLS_DATABASE || '';
 const booksDatabaseId = process.env.NOTION_BOOKS_DATABASE || '';
 
 const taskFilter = {
-    and:[
+    or:[
         {
-            "property": "Pillar",
-            "relation": {
-                "is_empty": true
-            }
+            //sets pillar on task
+            and:[
+                {
+                    property: "Pillar",
+                    relation: {
+                        "is_empty": true
+                    }
+                },
+                {
+                    property: "Done",
+                    checkbox: {
+                        equals: false
+                    }
+                }
+            ]
         },
         {
-            "property": "Done",
-            "checkbox": {
-                "equals": false
-            }
+            //sets daily tasks
+            and:[
+                {            
+                    property: "Daily",
+                    checkbox: {
+                        equals: true
+                    }
+                },
+                {
+                    property: "Done",
+                    checkbox: {
+                        equals: true
+                    }
+                },
+                {
+                    property: "Completed At",
+                    date: {
+                        "is_not_empty": true
+                    }
+                },
+                {
+                    property: "Completed At",
+                    date: {
+                        before: new Date().toISOString().split('T')[0]
+                    }
+                }
+            ]
+        },
+        {
+            // sets CompletedAt value
+            and:[
+                {
+                    property: "Done",
+                    checkbox: {
+                        equals: true
+                    }
+                },
+                {
+                    property: "Completed At",
+                    date: {
+                        "is_empty": true
+                    }
+                },
+            ]
         }
     ]
 };

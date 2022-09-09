@@ -25,14 +25,14 @@ class Notion{
 
     public async LookForWork(req:Request,res:Response){
         try{
-            const taskItems = await this.tasks.LookForWork() as QueryDatabaseResponse;
-            const bookItems = await this.books.LookForWork() as QueryDatabaseResponse;
-            const billItems = await this.bills.LookForWork() as QueryDatabaseResponse;
+            const taskResp = await this.tasks.LookForWork() as QueryDatabaseResponse;
+            const bookResp = await this.books.LookForWork() as QueryDatabaseResponse;
+            const billResp = await this.bills.LookForWork() as QueryDatabaseResponse;
             
             await Promise.all([
-                this.tasks.DoWork(taskItems),
-                this.books.DoWork(bookItems),
-                this.bills.DoWork(billItems),
+                this.tasks.DoWork(taskResp),
+                this.books.DoWork(bookResp),
+                this.bills.DoWork(billResp),
             ]);
     
             res.status(200).json({complete:true});
