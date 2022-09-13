@@ -27,7 +27,7 @@ class NotionDatabase{
                 return [];
             }
         }catch(e){
-            console.log('error in NotionDatabase.LookForWork');
+            console.log('error in NotionDatabase.LookForWork',e);
             throw e;
         }
     }

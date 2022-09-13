@@ -70,12 +70,16 @@ class Tasks extends NotionDatabase {
 
     private async setPillarOnTask(task: Task){
         const projectId = task.properties.Project.relation[0]?.id;
-        const project = await this.getPage(projectId) as any;
-        const pillarId = project.properties.Pillars.relation[0]?.id
-        if(pillarId){
-            this.addPillarToTask(task.id, pillarId);
+        if(projectId){
+            const project = await this.getPage(projectId) as any;
+            const pillarId = project.properties.Pillars.relation[0]?.id
+            if(pillarId){
+                this.addPillarToTask(task.id, pillarId);
+            }else{
+                console.warn(`${project.properties.Name.title[0].plain_text} does not have a Pillar assigned`)
+            }
         }else{
-            console.warn(`${project.properties.Name.title[0].plain_text} does not have a Pillar assigned`)
+            console.warn(`${task.properties.Title.title[0].plain_text} doesnt have a project assigned`)
         }
     }
 

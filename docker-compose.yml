@@ -3,10 +3,14 @@ version: '3.4'
 services:
   notionbot:
     image: notionbot
+    network_mode: host
     build:
       context: .
       dockerfile: ./Dockerfile
+      network: host
     environment:
       NODE_ENV: production
-    ports:
-      - 3000:3000
+      NOTION_KEY: ${NOTION_KEY}
+      NOTION_TASKS_DATABASE: ${NOTION_TASKS_DATABASE}
+      NOTION_BILLS_DATABASE: ${NOTION_BILLS_DATABASE}
+      NOTION_BOOKS_DATABASE: ${NOTION_BOOKS_DATABASE}
