@@ -61,7 +61,8 @@ class Tasks extends NotionDatabase {
         const options = {
             "Completed At":{
                 date: {
-                    "start": this.toIsoString(new Date())
+                    "start": this.toIsoString(new Date()),
+                    "time_zone": "America/New_York"
                 }
             }
         }
@@ -95,8 +96,6 @@ class Tasks extends NotionDatabase {
     }
 
     private toIsoString(date:Date) {
-        const tzo = -date.getTimezoneOffset();
-        const dif = tzo >= 0 ? '+' : '-';
         const pad = function(num:number) {
             return (num < 10 ? '0' : '') + num;
         };
@@ -106,9 +105,7 @@ class Tasks extends NotionDatabase {
             '-' + pad(date.getDate()) +
             'T' + pad(date.getHours()) +
             ':' + pad(date.getMinutes()) +
-            ':' + pad(date.getSeconds()) +
-            dif + pad(Math.floor(Math.abs(tzo) / 60)) +
-            ':' + pad(Math.abs(tzo) % 60);
+            ':' + pad(date.getSeconds());
     }
 }
 
