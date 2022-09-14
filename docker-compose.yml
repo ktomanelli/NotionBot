@@ -10,6 +10,7 @@ services:
       network: host
     environment:
       NODE_ENV: production
+      TZ: America/New_York
       NOTION_KEY: ${NOTION_KEY}
       NOTION_TASKS_DATABASE: ${NOTION_TASKS_DATABASE}
       NOTION_BILLS_DATABASE: ${NOTION_BILLS_DATABASE}
