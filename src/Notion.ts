@@ -1,11 +1,9 @@
-import {Client} from '@notionhq/client';
-import {notionKey} from './config';
-import { QueryDatabaseResponse } from '@notionhq/client/build/src/api-endpoints';
 import { Request, Response } from 'express';
 import Tasks from './modules/Tasks';
 import Bills from './modules/Bills';
 import Books from './modules/Books';
 import Clothes from './modules/Clothes';
+import { taskFilter } from './config';
 
 class Notion{
     private tasks;
@@ -23,10 +21,10 @@ class Notion{
     public async LookForWork(req:Request,res:Response){
         try{
             await Promise.all([
-                this.tasks.LookForWorkAndAddWorkToQueue(),
-                this.books.LookForWorkAndAddWorkToQueue(),
-                this.bills.LookForWorkAndAddWorkToQueue(),
-                this.clothes.LookForWorkAndAddWorkToQueue(),
+                this.tasks.LookForWorkAndAddWorkToQueue(taskFilter()),
+                this.books.LookForWorkAndAddWorkToQueue(null),
+                this.bills.LookForWorkAndAddWorkToQueue(null),
+                this.clothes.LookForWorkAndAddWorkToQueue(null),
             ])
 
             res.status(200).json({complete:true});

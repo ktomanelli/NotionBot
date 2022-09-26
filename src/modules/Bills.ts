@@ -6,7 +6,7 @@ import NotionDatabase from './NotionDatabase';
 
 class Bills extends NotionDatabase{
     constructor(client:Client, queue: Queue){
-        super(client, queue, {database_id:billsDatabaseId, filter: billFilter as any});
+        super(client, queue, billsDatabaseId);
     }
 
     public async GenerateMessagesForQueue(notionResp: any):Promise<void>{

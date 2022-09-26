@@ -1,5 +1,5 @@
 import { Client } from '@notionhq/client';
-import { tasksDatabaseId, taskFilter } from '../config';
+import { tasksDatabaseId } from '../config';
 import Queue from '../Queue';
 import { Action } from '../types/Action';
 import { Task } from '../types/Task';
@@ -9,7 +9,7 @@ import NotionDatabase from './NotionDatabase';
 // add due dates to tasks based on startdate and size
 class Tasks extends NotionDatabase {
     constructor(client:Client, queue: Queue){
-        super(client, queue, {database_id:tasksDatabaseId, filter:taskFilter as any});
+        super(client, queue, tasksDatabaseId);
     }
 
     public async GenerateMessagesForQueue(notionResp: any): Promise<void>{

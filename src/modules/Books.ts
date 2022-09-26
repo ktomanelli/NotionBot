@@ -8,7 +8,7 @@ import NotionDatabase from './NotionDatabase';
 
 class Books extends NotionDatabase{
     constructor(client:Client, queue: Queue){
-        super(client, queue, {database_id: booksDatabaseId, filter:bookFilter as any});
+        super(client, queue, booksDatabaseId);
     }
 
     public async GenerateMessagesForQueue(notionResp: any):Promise<void>{

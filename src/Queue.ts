@@ -14,7 +14,6 @@ class Queue{
         this.q = fastq.promise(this.asyncWorker,5);
     }
 
-    
     public push(message: QueueMessage){
         this.q.push(message).catch((err) => console.error(err))
     }

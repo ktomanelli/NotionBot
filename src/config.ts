@@ -7,7 +7,7 @@ const billsDatabaseId = process.env.NOTION_BILLS_DATABASE || '';
 const booksDatabaseId = process.env.NOTION_BOOKS_DATABASE || '';
 const clothesDatabaseId = process.env.NOTION_CLOTHES_DATABASE || '';
 
-const taskFilter = {
+const taskFilter = () => ({
     or:[
         {
             //sets pillar on task
@@ -73,13 +73,13 @@ const taskFilter = {
             ]
         }
     ]
-};
+});
 
-const billFilter = null;
+const billFilter = () => null;
 
-const bookFilter = null;
+const bookFilter = () => null;
 
-const clothesFilter = null;
+const clothesFilter = () => null;
 
 export {
     notionKey, 

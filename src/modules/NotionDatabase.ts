@@ -1,7 +1,5 @@
 import {Client} from '@notionhq/client';
 import { QueryDatabaseParameters } from '@notionhq/client/build/src/api-endpoints';
-import * as fastq from "fastq";
-import type { queueAsPromised } from "fastq";
 import { QueueMessage } from '../types/QueueMessage';
 import Queue from '../Queue';
 
@@ -9,13 +7,11 @@ class NotionDatabase{
     protected client;
     protected queue;
     private databaseId;
-    private filter;
-    constructor(client:Client, queue: Queue, payload: QueryDatabaseParameters){
+    constructor(client:Client, queue: Queue, database_id: string){
         this.client = client;
         this.queue = queue;
-        if(payload.database_id){
-            this.databaseId = payload.database_id;
-            this.filter = payload.filter;
+        if(database_id){
+            this.databaseId = database_id;
         } else {
             throw new Error('Invalid environment settings');
         }
@@ -25,12 +21,12 @@ class NotionDatabase{
         this.queue.push(message)
     }
 
-    public async LookForWorkAndAddWorkToQueue(): Promise<void>{
+    public async LookForWorkAndAddWorkToQueue(filter:any): Promise<void>{
         try{
-            if(this.filter){
+            if(filter){
                 const result = await this.client.databases.query({
                     database_id: this.databaseId,
-                    filter: this.filter
+                    filter
                 });
                 return this.GenerateMessagesForQueue(result);
             }
