@@ -5,6 +5,7 @@ const notionKey = process.env.NOTION_KEY || '';
 const tasksDatabaseId = process.env.NOTION_TASKS_DATABASE || '';
 const billsDatabaseId = process.env.NOTION_BILLS_DATABASE || '';
 const booksDatabaseId = process.env.NOTION_BOOKS_DATABASE || '';
+const clothesDatabaseId = process.env.NOTION_CLOTHES_DATABASE || '';
 
 const taskFilter = {
     or:[
@@ -78,12 +79,16 @@ const billFilter = null;
 
 const bookFilter = null;
 
+const clothesFilter = null;
+
 export {
     notionKey, 
     tasksDatabaseId, 
     billsDatabaseId, 
     booksDatabaseId,
+    clothesDatabaseId,
     taskFilter,
     billFilter,
-    bookFilter
+    bookFilter,
+    clothesFilter
 };

@@ -1,15 +1,17 @@
 import { Client } from '@notionhq/client';
-import { QueryDatabaseResponse } from '@notionhq/client/build/src/api-endpoints';
 import { billsDatabaseId, billFilter } from '../config';
+import Queue from '../Queue';
+import { Bill } from '../types/Bill';
 import NotionDatabase from './NotionDatabase';
 
 class Bills extends NotionDatabase{
-    constructor(client:Client){
-        super(client, {database_id:billsDatabaseId, filter: billFilter as any});
+    constructor(client:Client, queue: Queue){
+        super(client, queue, {database_id:billsDatabaseId, filter: billFilter as any});
     }
 
-    public DoWork(bills: QueryDatabaseResponse){
-
+    public async GenerateMessagesForQueue(notionResp: any):Promise<void>{
+        for(const task of notionResp.results as Bill[]){
+        }
     }
 }
 

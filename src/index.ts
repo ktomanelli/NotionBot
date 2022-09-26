@@ -1,7 +1,21 @@
 import Notion from './Notion';
 import express, { Request, Response } from 'express';
+import { Client } from '@notionhq/client';
+import Tasks from './modules/Tasks';
+import Books from './modules/Books';
+import Bills from './modules/Bills';
+import Clothes from './modules/Clothes';
+import Queue from './Queue';
+import { notionKey } from './config';
+
 const app = express();
-const notion = new Notion();
+const client = new Client({auth: notionKey});
+const queue = new Queue();
+const tasks = new Tasks(client, queue);
+const books = new Books(client, queue);
+const bills = new Bills(client, queue);
+const clothes = new Clothes(client, queue);
+const notion = new Notion(tasks, books, bills, clothes);
 
 app.get('/',(req:Request,res:Response)=>res.send('app running successfully'));
 

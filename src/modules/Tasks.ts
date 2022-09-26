@@ -1,25 +1,27 @@
 import { Client } from '@notionhq/client';
 import { tasksDatabaseId, taskFilter } from '../config';
+import Queue from '../Queue';
+import { Action } from '../types/Action';
 import { Task } from '../types/Task';
 import NotionDatabase from './NotionDatabase';
 
 // todo:
 // add due dates to tasks based on startdate and size
 class Tasks extends NotionDatabase {
-    constructor(client:Client){
-        super(client, {database_id:tasksDatabaseId, filter:taskFilter as any});
+    constructor(client:Client, queue: Queue){
+        super(client, queue, {database_id:tasksDatabaseId, filter:taskFilter as any});
     }
 
-    public async DoWork(taskResp: any){
-        for(const task of taskResp.results as Task[]){
+    public async GenerateMessagesForQueue(notionResp: any): Promise<void>{
+        for(const task of notionResp.results as Task[]){
             if(this.flaggedForPillar(task)){
-                this.setPillarOnTask(task);
+                this.PutMessageOnQueue({object: this, action: Action.SetPillarOnTask, item: task});
             }
             if(this.flaggedForCompletedAt(task)){
-                this.setCompletedAt(task)
+                this.PutMessageOnQueue({object: this, action: Action.SetCompletedAt, item: task});
             }
             if(this.flaggedForDaily(task)){
-                this.setDaily(task)
+                this.PutMessageOnQueue({object: this, action: Action.SetDaily, item: task});
             }
         }
     }
@@ -45,7 +47,7 @@ class Tasks extends NotionDatabase {
         return task.properties.Done.checkbox
     }
     
-    private async setDaily(task:Task){
+    public async SetDaily(task:Task){
         const options = {
             "Completed At":{
                 date: null
@@ -57,7 +59,7 @@ class Tasks extends NotionDatabase {
         await this.updatePage(task.id, options)
     }
 
-    private async setCompletedAt(task: Task){
+    public async SetCompletedAt(task: Task){
         const options = {
             "Completed At":{
                 date: {
@@ -69,7 +71,7 @@ class Tasks extends NotionDatabase {
         await this.updatePage(task.id, options)
     }
 
-    private async setPillarOnTask(task: Task){
+    public async SetPillarOnTask(task: Task){
         const projectId = task.properties.Project.relation[0]?.id;
         if(projectId){
             const project = await this.getPage(projectId) as any;

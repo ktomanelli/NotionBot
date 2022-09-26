@@ -1,38 +1,34 @@
 import {Client} from '@notionhq/client';
 import {notionKey} from './config';
+import { QueryDatabaseResponse } from '@notionhq/client/build/src/api-endpoints';
+import { Request, Response } from 'express';
 import Tasks from './modules/Tasks';
 import Bills from './modules/Bills';
 import Books from './modules/Books';
-import { QueryDatabaseResponse } from '@notionhq/client/build/src/api-endpoints';
-import { Request, Response } from 'express';
+import Clothes from './modules/Clothes';
 
 class Notion{
-    private client;
     private tasks;
     private books;
     private bills;
+    private clothes;
 
-    constructor(){
-        if(notionKey){
-            this.client = new Client({auth: notionKey});
-            this.tasks = new Tasks(this.client);
-            this.books = new Books(this.client);
-            this.bills = new Bills(this.client);
-        }else{
-            throw new Error('Invalid notion key');
-        }
+    constructor(tasks:Tasks, books:Books, bills:Bills, clothes:Clothes){
+        this.tasks = tasks;
+        this.books = books;
+        this.bills = bills;
+        this.clothes = clothes;
     }
 
     public async LookForWork(req:Request,res:Response){
         try{
-            const taskResp = await this.tasks.LookForWork() as QueryDatabaseResponse;
-            const bookResp = await this.books.LookForWork() as QueryDatabaseResponse;
-            const billResp = await this.bills.LookForWork() as QueryDatabaseResponse;
             await Promise.all([
-                this.tasks.DoWork(taskResp),
-                this.books.DoWork(bookResp),
-                this.bills.DoWork(billResp),
-            ]);
+                this.tasks.LookForWorkAndAddWorkToQueue(),
+                this.books.LookForWorkAndAddWorkToQueue(),
+                this.bills.LookForWorkAndAddWorkToQueue(),
+                this.clothes.LookForWorkAndAddWorkToQueue(),
+            ])
+
             res.status(200).json({complete:true});
         } catch(e){
             res.status(500).json(e)
