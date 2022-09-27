@@ -50,7 +50,7 @@ const taskFilter = () => ({
                 {
                     property: "Completed At",
                     date: {
-                        before: new Date().toISOString().split('T')[0]
+                        before: new Date().toISOString().split('T')[0]+"T12:00:00"
                     }
                 }
             ]
