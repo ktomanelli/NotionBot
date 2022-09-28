@@ -44,7 +44,9 @@ class Tasks extends NotionDatabase {
             const status = this.isDone(parent) && !this.isDone(task)
             if(status){
                 options.Status = {
-                    status: "Done"
+                    status: {
+                        name:"Done"
+                    }
                 }
             }
             const projectId = parent.properties.Project?.relation[0]?.id;
@@ -171,21 +173,6 @@ class Tasks extends NotionDatabase {
             }
         }catch(e){
             console.log('error in SetPillarOnTask')
-        }
-    }
-
-    public async SyncStatus(task:Task){
-        try{
-            const options = {
-                Status:{
-                    status: {
-                        name: "Done"
-                    }
-                }
-            }
-            await this.updatePage(task.id, options)
-        }catch(e){
-            console.log('error in SyncStatus')
         }
     }
 
