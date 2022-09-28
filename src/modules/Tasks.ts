@@ -13,8 +13,6 @@ class Tasks extends NotionDatabase {
     }
 
     public async GenerateMessagesForQueue(notionResp: any): Promise<void>{
-
-        console.log(notionResp.results.length)
         for(const task of notionResp.results as Task[]){
             if(this.flaggedForPillar(task)){
                 this.PutMessageOnQueue({object: this, action: Action.SetPillarOnTask, item: task});

@@ -1,5 +1,6 @@
 import Notion from './Notion';
 import express, { Request, Response } from 'express';
+import responseTime from 'response-time';
 import { Client } from '@notionhq/client';
 import Tasks from './modules/Tasks';
 import Books from './modules/Books';
@@ -9,6 +10,7 @@ import Queue from './Queue';
 import { notionKey } from './config';
 
 const app = express();
+app.use(responseTime());
 const client = new Client({auth: notionKey});
 const queue = new Queue();
 const tasks = new Tasks(client, queue);
