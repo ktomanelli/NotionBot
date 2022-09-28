@@ -9,8 +9,8 @@ const clothesDatabaseId = process.env.NOTION_CLOTHES_DATABASE || '';
 
 const taskFilter = () => ({
     or:[
+        // sets pillar on task
         {
-            //sets pillar on task
             and:[
                 {
                     property: "Pillar",
@@ -19,26 +19,26 @@ const taskFilter = () => ({
                     }
                 },
                 {
-                    property: "Done",
-                    checkbox: {
-                        equals: false
+                    property: "Status",
+                    status: {
+                        "equals": "Done"
                     }
                 }
             ]
         },
+        // sets recurring tasks
         {
-            //sets daily tasks
             and:[
                 {            
-                    property: "Daily",
-                    checkbox: {
-                        equals: true
+                    property: "Recurring",
+                    select: {
+                        "is_not_empty": true
                     }
                 },
                 {
-                    property: "Done",
-                    checkbox: {
-                        equals: true
+                    property: "Status",
+                    status: {
+                        "equals": "Done"
                     }
                 },
                 {
@@ -55,13 +55,13 @@ const taskFilter = () => ({
                 }
             ]
         },
+        // sets CompletedAt value
         {
-            // sets CompletedAt value
             and:[
                 {
-                    property: "Done",
-                    checkbox: {
-                        equals: true
+                    property: "Status",
+                    status: {
+                        "equals": "Done"
                     }
                 },
                 {
@@ -71,6 +71,23 @@ const taskFilter = () => ({
                     }
                 },
             ]
+        },
+        // sets child tasks to mirror some properties of parent
+        {
+            // and:[
+                // {
+                    property: "Parent",
+                    relation:{
+                        "is_not_empty": true
+                    }
+                // },
+                // {
+                //     property: "Status",
+                //     status: {
+                //         "does_not_equal": "Done"
+                //     }
+                // }
+            // ]
         }
     ]
 });

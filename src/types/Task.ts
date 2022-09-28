@@ -1,7 +1,10 @@
-import { Checkbox } from "./Checkbox"
+import { CreatedAt } from "./CreatedAt"
 import { Date } from "./Date"
 import { Formula } from "./Formula"
 import { Relation } from "./Relation"
+import { Rollup } from "./Rollup"
+import { Select } from "./Select"
+import { Status } from "./Status"
 import { Title } from "./Title"
 
 export type Task = {
@@ -20,24 +23,24 @@ export type Task = {
     archived: Boolean,
     properties: {
         'End Date': Formula,
-        'In Progress (Will work on today)': Checkbox,
+        Status: Status,
+        Recurring: Select,
+        "Frequency Input": Date,
         'Start Date': Date,
         Pillar: Relation,
-        Daily: Checkbox,
         Type: Formula,
         ID: Formula,
         'Completed At': Date,
         'Sub-Tasks': Relation,
         Project: Relation,
-        Done: Checkbox,
-        Created_at: {
-        id: string,
-        type: string,
-        created_time: string
-        },
+        Created_at: CreatedAt,
         Size: Relation,
         Parent: Relation,
         Title: Title
-    },
+        Sprint: Relation,
+        'Ordinal Number': Formula,
+        Frequency: Formula,
+        'Active Sprint': Rollup,
+    }
     url: string
 }

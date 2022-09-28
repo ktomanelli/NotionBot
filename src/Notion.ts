@@ -28,7 +28,8 @@ class Notion{
             ])
 
             res.status(200).json({complete:true});
-        } catch(e){
+        } catch(e:any){
+            console.log(e.message)
             res.status(500).json(e)
         }
     }
