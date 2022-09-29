@@ -1,10 +1,10 @@
 import { Client } from '@notionhq/client';
+import moment from 'moment';
 import { tasksDatabaseId } from '../config';
 import Queue from '../Queue';
 import { Action } from '../types/Action';
 import { Task } from '../types/Task';
 import NotionDatabase from './NotionDatabase';
-
 // todo:
 // add due dates to tasks based on startdate and size
 class Tasks extends NotionDatabase {
@@ -100,7 +100,9 @@ class Tasks extends NotionDatabase {
                     date: null
                 },
                 "Status": {
-                    status: "In progress"
+                    status: {
+                        name:"In progress"
+                    }
                 }
             }
             await this.updatePage(task.id, options)
@@ -144,7 +146,7 @@ class Tasks extends NotionDatabase {
             const options = {
                 "Completed At":{
                     date: {
-                        "start": this.toIsoString(new Date()),
+                        "start": this.toIsoString(this.now()),
                         "time_zone": "America/New_York"
                     }
                 }
@@ -175,17 +177,17 @@ class Tasks extends NotionDatabase {
     }
 
     private flaggedForCompletedAt(task: Task): boolean{
-        return this.isDone(task) && !this.hasCompletedTimestamp(task);
+        return this.isDone(task) && task.properties["Completed At"].date?.start;
     }
 
     private flaggedForDailyReset(task: Task): boolean{
-        return this.isDaily(task) && this.isReadyForDailyReset(task) && this.isDone(task) && this.hasCompletedTimestamp(task)
+        return this.isDaily(task) && this.isReadyForDailyReset(task) && this.isDone(task) && this.hasCompletedTimestampFromPreviousDay(task)
     }
     private flaggedForWeeklyReset(task: Task): boolean{
-        return this.isWeekly(task) && this.isReadyForWeeklyReset(task) && this.isDone(task) && this.hasCompletedTimestamp(task)
+        return this.isWeekly(task) && this.isReadyForWeeklyReset(task) && this.isDone(task) && this.hasCompletedTimestampFromPreviousWeek(task)
     }
     private flaggedForMonthlyReset(task: Task): boolean{
-        return this.isMonthly(task) && this.isReadyForMonthlyReset(task) && this.isDone(task) && this.hasCompletedTimestamp(task)
+        return this.isMonthly(task) && this.isReadyForMonthlyReset(task) && this.isDone(task) && this.hasCompletedTimestampFromPreviousMonth(task)
     }
 
     private flaggedForPillar(task: Task): boolean{
@@ -197,8 +199,17 @@ class Tasks extends NotionDatabase {
         return task.properties.Parent.relation.length > 0;//&& !this.isDone(task);
     }
 
-    private hasCompletedTimestamp(task: Task){
-        return task.properties["Completed At"].date !== null;
+    private hasCompletedTimestampFromPreviousDay(task: Task){
+        const date = task.properties["Completed At"].date?.start;
+        return date && !this.isToday(date);
+    }
+    private hasCompletedTimestampFromPreviousWeek(task: Task){
+        const date = task.properties["Completed At"].date?.start;
+        return date && !this.isThisWeek(date);
+    }
+    private hasCompletedTimestampFromPreviousMonth(task: Task){
+        const date = task.properties["Completed At"].date?.start;
+        return date && !this.isThisMonth(date);
     }
 
     private isDone(task: Task){
@@ -206,8 +217,8 @@ class Tasks extends NotionDatabase {
     }
 
     private isReadyForDailyReset(task: Task){
-        if(task.properties['Frequency Input'].date && task.properties.Recurring.select?.name === 'Daily'){
-            return this.timeHasPast(new Date(task.properties['Frequency Input'].date))
+        if(task.properties['Frequency Input'].date?.start && task.properties.Recurring.select?.name === 'Daily'){
+            return this.timeHasPast(new Date(task.properties['Frequency Input'].date.start))
         }else{
             console.log(`Recurring task, "${task.properties.Title.title[0].plain_text}" does not have Frequency Input set, or has invalid 'Recurring' value!`)
         }
@@ -216,7 +227,7 @@ class Tasks extends NotionDatabase {
 
     private isReadyForWeeklyReset(task:Task){
         if(task.properties['Frequency Input'].date && task.properties.Recurring.select?.name === 'Weekly'){
-            return this.weekDayHasPast(new Date(task.properties['Frequency Input'].date))
+            return this.weekDayHasPast(new Date(task.properties['Frequency Input'].date.start))
         }else{
             console.log(`Recurring task, "${task.properties.Title.title[0].plain_text}" does not have Frequency Input set, or has invalid 'Recurring' value!`)
         }
@@ -225,7 +236,7 @@ class Tasks extends NotionDatabase {
 
     private isReadyForMonthlyReset(task:Task){
         if(task.properties['Frequency Input'].date && task.properties.Recurring.select?.name === 'Monthly'){
-            return this.dateHasPast(new Date(task.properties['Frequency Input'].date))
+            return this.dateHasPast(new Date(task.properties['Frequency Input'].date.start))
         }else{
             console.log(`Recurring task, "${task.properties.Title.title[0].plain_text}" does not have Frequency Input set, or has invalid 'Recurring' value!`)
         }
@@ -245,22 +256,39 @@ class Tasks extends NotionDatabase {
     }
 
     private timeHasPast(date:Date){
-        const now = new Date();
+        const now = this.now();
         const currentMinutes = now.getHours()*60+now.getMinutes();
         const dateMinutes = date.getHours()*60+date.getMinutes();
-        return currentMinutes <= dateMinutes;
+        return currentMinutes >= dateMinutes;
     }
 
     private weekDayHasPast(date:Date){
-        const today = new Date().getDay();
+        const today = this.now().getDay();
         const dateDay = date.getDay();
-        return today <= dateDay;
+        return today >= dateDay;
     }
 
     private dateHasPast(date:Date){
-        const today = new Date().getDate();
+        const today = this.now().getDate();
         const dateDay = date.getDate();
-        return today <= dateDay || today <= new Date(date.getFullYear(), date.getMonth()+1, 0).getDate();
+        return today >= dateDay || today >= new Date(date.getFullYear(), date.getMonth()+1, 0).getDate();
+    }
+
+    private isToday(date:Date){
+        return (this.now().getDate() === date.getDate()
+        &&  this.now().getMonth() === date.getMonth()
+        && this.now().getFullYear() === date.getFullYear());
+    }
+    private isThisWeek(date:Date){
+        return moment().isoWeek() === moment(date.toISOString()).isoWeek()
+    }
+    private isThisMonth(date:Date){
+        return (this.now().getMonth() === date.getMonth() 
+        && this.now().getFullYear() === date.getFullYear());
+    }
+
+    private now(){
+        return new Date()
     }
 
     private async addPillarToTask(taskId: string, pillarId: string){
