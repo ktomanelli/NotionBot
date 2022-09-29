@@ -21,7 +21,7 @@ const taskFilter = () => ({
                 {
                     property: "Status",
                     status: {
-                        "equals": "Done"
+                        "does_not_equal": "Done"
                     }
                 }
             ]
@@ -74,20 +74,10 @@ const taskFilter = () => ({
         },
         // sets child tasks to mirror some properties of parent
         {
-            // and:[
-                // {
-                    property: "Parent",
-                    relation:{
-                        "is_not_empty": true
-                    }
-                // },
-                // {
-                //     property: "Status",
-                //     status: {
-                //         "does_not_equal": "Done"
-                //     }
-                // }
-            // ]
+            property: "Parent",
+            relation:{
+                "is_not_empty": true
+            }
         }
     ]
 });
