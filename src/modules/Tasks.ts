@@ -177,7 +177,7 @@ class Tasks extends NotionDatabase {
     }
 
     private flaggedForCompletedAt(task: Task): boolean{
-        return this.isDone(task) && task.properties["Completed At"].date?.start;
+        return this.isDone(task) && !task.properties["Completed At"].date?.start;
     }
 
     private flaggedForDailyReset(task: Task): boolean{
@@ -201,7 +201,7 @@ class Tasks extends NotionDatabase {
 
     private hasCompletedTimestampFromPreviousDay(task: Task){
         const date = task.properties["Completed At"].date?.start;
-        return date && !this.isToday(date);
+        return date && !this.isToday(new Date(date));
     }
     private hasCompletedTimestampFromPreviousWeek(task: Task){
         const date = task.properties["Completed At"].date?.start;
