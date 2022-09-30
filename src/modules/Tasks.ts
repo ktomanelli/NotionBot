@@ -199,9 +199,11 @@ class Tasks extends NotionDatabase {
         return task.properties.Parent.relation.length > 0;//&& !this.isDone(task);
     }
 
+    // check for task completed yesterday or today before 3am
     private hasCompletedTimestampFromPreviousDay(task: Task){
-        const date = task.properties["Completed At"].date?.start;
-        return date && !this.isToday(new Date(date));
+        const dateString = task.properties["Completed At"].date?.start;
+        const date = dateString ? new Date(dateString) : false; 
+        return date && (!this.isToday(date)||(this.isToday(date) && date.getHours()<4));
     }
     private hasCompletedTimestampFromPreviousWeek(task: Task){
         const date = task.properties["Completed At"].date?.start;
