@@ -37,58 +37,62 @@ class Tasks extends NotionDatabase {
 
     public async SyncParent(task:Task){
         try{
-            const parent = await this.getPage(task.properties.Parent.relation[0].id) as Task;
-            const options:any = {}
-            const status = this.isDone(parent) && !this.isDone(task)
-            if(status){
-                options.Status = {
-                    status: {
-                        name:"Done"
+            const parent = task;
+            const subtasks = task.properties['Sub-Tasks'].relation;
+            for(const item of subtasks) {
+                const subTask = await this.getPage(item.id) as Task;
+                const options:any = {}
+                const status = this.isDone(parent) && !this.isDone(subTask)
+                if(status){
+                    options.Status = {
+                        status: {
+                            name:"Done"
+                        }
                     }
                 }
-            }
-            const projectId = parent.properties.Project?.relation[0]?.id;
-            if(projectId && task.properties.Project.relation.length === 0){
-                options.Project = {
-                    relation: [
-                        {id: projectId}
-                    ]
-                }
-            }
-            const pillarId = parent.properties.Pillar?.relation[0]?.id;
-            if(pillarId && task.properties.Pillar.relation.length === 0){
-                options.Pillar = {
-                    relation: [
-                        {id: pillarId}
-                    ]
-                }
-            }
-            const sprintId = parent.properties.Sprint?.relation[0]?.id;
-            if(sprintId){
-                options.Sprint = {
-                    relatation:[
-                        {id: sprintId}
-                    ]
-                }
-            }
-            const frequencyInput = parent.properties['Frequency Input'].date?.start;
-            if(frequencyInput){
-                options["Frequency Input"] = {
-                    date:{
-                        start: this.toIsoString(new Date(frequencyInput)),
-                        "time_zone": "America/New_York"
+                const projectId = parent.properties.Project?.relation[0]?.id;
+                if(projectId && subTask.properties.Project.relation.length === 0){
+                    options.Project = {
+                        relation: [
+                            {id: projectId}
+                        ]
                     }
                 }
-            }
-            const recurring = parent.properties.Recurring.select?.name;
-            if(recurring){
-                options.Recurring = {
-                    select:{
-                        name: recurring
+                const pillarId = parent.properties.Pillar?.relation[0]?.id;
+                if(pillarId && subTask.properties.Pillar.relation.length === 0){
+                    options.Pillar = {
+                        relation: [
+                            {id: pillarId}
+                        ]
                     }
                 }
+                const sprintId = parent.properties.Sprint?.relation[0]?.id;
+                if(sprintId){
+                    options.Sprint = {
+                        relatation:[
+                            {id: sprintId}
+                        ]
+                    }
+                }
+                const frequencyInput = parent.properties['Frequency Input'].date?.start;
+                if(frequencyInput){
+                    options["Frequency Input"] = {
+                        date:{
+                            start: this.toIsoString(new Date(frequencyInput)),
+                            "time_zone": "America/New_York"
+                        }
+                    }
+                }
+                const recurring = parent.properties.Recurring.select?.name;
+                if(recurring){
+                    options.Recurring = {
+                        select:{
+                            name: recurring
+                        }
+                    }
+                }
+                await this.updatePage(subTask.id, options)
             }
-            await this.updatePage(task.id, options)
         }catch(e){
             console.log('error in SyncParent')
         }
@@ -197,7 +201,7 @@ class Tasks extends NotionDatabase {
     }
 
     private flaggedForSyncParent(task:Task){
-        return task.properties.Parent.relation.length > 0;//&& !this.isDone(task);
+        return task.properties["Sub-Tasks"].relation.length > 0;
     }
 
     // check for task completed yesterday or today before 3am

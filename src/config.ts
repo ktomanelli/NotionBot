@@ -74,21 +74,11 @@ const taskFilter = () => ({
         },
         // sets child tasks to mirror some properties of parent
         {
-            "and": [
-                {
-                    property: "Parent",
-                    relation:{
-                        "is_not_empty": true
-                    }
-                },
-                {
-                    property: "Pillar",
-                    relation: {
-                        "is_empty": true
-                    }
-                },
-            ]
-          }
+            property: "Sub-Tasks",
+            relation:{
+                "is_not_empty": true
+            }
+        }
     ]
 });
 
