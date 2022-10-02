@@ -73,48 +73,22 @@ const taskFilter = () => ({
             ]
         },
         // sets child tasks to mirror some properties of parent
-        {   and:[
-            {
-                property: "Parent",
-                relation:{
-                    "is_not_empty": true
-                }
-            },
-            {
-                or:[
-                    {
-                        property: "Pillar",
-                        relation: {
-                            "is_empty": true
-                        }
-                    },
-                    {
-                        property: "Project",
-                        relation: {
-                            "is_empty": true
-                        }
-                    },
-                    {
-                        and:[
-                            {            
-                                property: "Recurring",
-                                select: {
-                                    "is_not_empty": true
-                                }
-                            },
-                            {
-                                property: "Frequency Input",
-                                date: {
-                                    "is_empty": true
-                                }
-                            }
-                        ]
+        {
+            "and": [
+                {
+                    property: "Parent",
+                    relation:{
+                        "is_not_empty": true
                     }
-                ]
-            }
-
-        ]
-        }
+                },
+                {
+                    property: "Pillar",
+                    relation: {
+                        "is_empty": true
+                    }
+                },
+            ]
+          }
     ]
 });
 

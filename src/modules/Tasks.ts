@@ -75,7 +75,8 @@ class Tasks extends NotionDatabase {
             if(frequencyInput){
                 options["Frequency Input"] = {
                     date:{
-                        start: this.toIsoString(new Date(frequencyInput))
+                        start: this.toIsoString(new Date(frequencyInput)),
+                        "time_zone": "America/New_York"
                     }
                 }
             }
