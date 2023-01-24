@@ -27,7 +27,7 @@ export class NotionController{
         const databaseId = body.parent.type==="database_id"?body.parent.database_id:''
         const module = this.getModule(databaseId);
         if(module){
-            module.handleUpdate();
+            module.handleCreate(body);
         }
         return res.sendStatus(200);
     }
@@ -36,7 +36,7 @@ export class NotionController{
         const databaseId = body.parent.type==="database_id"?body.parent.database_id:''
         const module = this.getModule(databaseId);
         if(module){
-            module.handleUpdate();
+            module.handleUpdate(body);
         }
         return res.sendStatus(200);
     }
@@ -45,7 +45,7 @@ export class NotionController{
         const databaseId = body.parent.type==="database_id"?body.parent.database_id:''
         const module = this.getModule(databaseId);
         if(module){
-            module.handleUpdate();
+            module.handleDelete(body);
         }
         return res.sendStatus(200);
     }
