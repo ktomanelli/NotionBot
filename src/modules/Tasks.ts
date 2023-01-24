@@ -18,10 +18,27 @@ class Tasks extends NotionDatabase {
             this.SyncParent(task);
         }
     }
-    public override async handleUpdate(){
-        throw new Error("Not Implemented")
+    public override async handleUpdate(task:PageObjectResponse){
+        if(this.flaggedForPillar(task)){
+            this.SetPillarOnTask(task);
+        }
+        if(this.flaggedForSyncParent(task)){
+            this.SyncParent(task);
+        }
+        if(this.flaggedForCompletedAt(task)){
+            this.SetCompletedAt(task);
+        }
+        if(this.flaggedForDailyReset(task)){
+            this.SetDaily(task);
+        }
+        if(this.flaggedForWeeklyReset(task)){
+            this.SetWeekly(task);
+        }
+        if(this.flaggedForMonthlyReset(task)){
+            this.SetMonthly(task);
+        }
     }
-    public override async handleDelete(){
+    public override async handleDelete(task:PageObjectResponse){
         throw new Error("Not Implemented")
     }
 
