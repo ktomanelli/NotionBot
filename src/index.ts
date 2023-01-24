@@ -1,29 +1,31 @@
-import Notion from './Notion';
 import express, { Request, Response } from 'express';
+import bodyParser from 'body-parser';
 import responseTime from 'response-time';
 import { Client } from '@notionhq/client';
 import Tasks from './modules/Tasks';
 import Books from './modules/Books';
 import Bills from './modules/Bills';
 import Clothes from './modules/Clothes';
-import Queue from './Queue';
 import { notionKey } from './config';
+import { NotionController } from './controllers/NotionController';
 
 const app = express();
 app.use(responseTime());
+app.use(bodyParser.json());
 const client = new Client({auth: notionKey});
-const queue = new Queue();
-const tasks = new Tasks(client, queue);
-const books = new Books(client, queue);
-const bills = new Bills(client, queue);
-const clothes = new Clothes(client, queue);
-const notion = new Notion(tasks, books, bills, clothes);
+const tasks = new Tasks(client);
+const books = new Books(client);
+const bills = new Bills(client);
+const clothes = new Clothes(client);
+const notionController = new NotionController(client, tasks, books, bills, clothes)
 
 app.get('/',(req:Request,res:Response)=>res.send('app running successfully'));
 
 app.get('/health',(req:Request,res:Response)=>res.send('todo: implement health check'));
 
-app.get('/notion', async (req:Request,res:Response) => await notion.LookForWork(req,res))
+app.put('/notion', async (req:Request,res:Response) => notionController.handleUpdate);
+app.post('/notion', async (req:Request,res:Response) => notionController.handleCreate);
+app.delete('/notion', async (req:Request,res:Response) => notionController.handleDelete);
 
 app.listen(3000, ()=>{
     console.log('app listening on 3000')

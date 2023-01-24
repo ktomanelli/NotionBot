@@ -1,46 +1,36 @@
 import { Client } from '@notionhq/client';
+import { PageObjectResponse, PropertyItemListResponse, PropertyItemPropertyItemListResponse } from '@notionhq/client/build/src/api-endpoints';
 import moment from 'moment';
 import { tasksDatabaseId } from '../config';
-import Queue from '../Queue';
-import { Action } from '../types/Action';
-import { Task } from '../types/Task';
 import NotionDatabase from './NotionDatabase';
 // todo:
 // add due dates to tasks based on startdate and size
 class Tasks extends NotionDatabase {
-    constructor(client:Client, queue: Queue){
-        super(client, queue, tasksDatabaseId);
+    constructor(client:Client){
+        super(client, tasksDatabaseId);
     }
 
-    public async GenerateMessagesForQueue(notionResp: any): Promise<void>{
-        for(const task of notionResp.results as Task[]){
-            if(this.flaggedForPillar(task)){
-                this.PutMessageOnQueue({object: this, action: Action.SetPillarOnTask, item: task});
-            }
-            if(this.flaggedForCompletedAt(task)){
-                this.PutMessageOnQueue({object: this, action: Action.SetCompletedAt, item: task});
-            }
-            if(this.flaggedForDailyReset(task)){
-                this.PutMessageOnQueue({object: this, action: Action.SetDaily, item: task});
-            }
-            if(this.flaggedForWeeklyReset(task)){
-                this.PutMessageOnQueue({object: this, action: Action.SetWeekly, item: task});
-            }
-            if(this.flaggedForMonthlyReset(task)){
-                this.PutMessageOnQueue({object: this, action: Action.SetMonthly, item: task});
-            }
-            if(this.flaggedForSyncParent(task)){
-                this.PutMessageOnQueue({object: this, action: Action.SyncParent, item: task});
-            }
+    public override async handleCreate(task:PageObjectResponse){
+        if(this.flaggedForPillar(task)){
+            this.SetPillarOnTask(task);
+        }
+        if(this.flaggedForSyncParent(task)){
+            this.SyncParent(task);
         }
     }
+    public override async handleUpdate(){
+        throw new Error("Not Implemented")
+    }
+    public override async handleDelete(){
+        throw new Error("Not Implemented")
+    }
 
-    public async SyncParent(task:Task){
+    public async SyncParent(task:PageObjectResponse){
         try{
             const parent = task;
-            const subtasks = task.properties['Sub-Tasks'].relation;
+            const subtasks = task.properties['Sub-Tasks'].type === 'relation' ? task.properties['Sub-Tasks'].relation : []
             for(const item of subtasks) {
-                const subTask = await this.getPage(item.id) as Task;
+                const subTask = await this.getPage(item.id);
                 const options:any = {}
                 const status = this.isDone(parent) && !this.isDone(subTask)
                 if(status){
@@ -50,23 +40,23 @@ class Tasks extends NotionDatabase {
                         }
                     }
                 }
-                const projectId = parent.properties.Project?.relation[0]?.id;
-                if(projectId && subTask.properties.Project.relation.length === 0){
+                const projectId = parent.properties.Project.type === 'relation' ? parent.properties.Project.id : null;
+                if(projectId && !this.HasProject(subTask)){
                     options.Project = {
                         relation: [
                             {id: projectId}
                         ]
                     }
                 }
-                const pillarId = parent.properties.Pillar?.relation[0]?.id;
-                if(pillarId && subTask.properties.Pillar.relation.length === 0){
+                const pillarId = parent.properties.Pillar.type === 'relation' ? parent.properties.Pillar.relation[0]?.id : null;
+                if(pillarId && !this.HasPillar(subTask)){
                     options.Pillar = {
                         relation: [
                             {id: pillarId}
                         ]
                     }
                 }
-                const sprintId = parent.properties.Sprint?.relation[0]?.id;
+                const sprintId = parent.properties.Sprint.type === 'relation'? parent.properties.Sprint.relation[0]?.id : null;
                 if(sprintId){
                     options.Sprint = {
                         relatation:[
@@ -74,7 +64,7 @@ class Tasks extends NotionDatabase {
                         ]
                     }
                 }
-                const frequencyInput = parent.properties['Frequency Input'].date?.start;
+                const frequencyInput = parent.properties['Frequency Input'].type === 'date' ? parent.properties['Frequency Input'].date?.start : null;
                 if(frequencyInput){
                     options["Frequency Input"] = {
                         date:{
@@ -83,7 +73,7 @@ class Tasks extends NotionDatabase {
                         }
                     }
                 }
-                const recurring = parent.properties.Recurring.select?.name;
+                const recurring = parent.properties.Recurring.type === 'select' ? parent.properties.Recurring.select?.name : null;
                 if(recurring){
                     options.Recurring = {
                         select:{
@@ -98,7 +88,7 @@ class Tasks extends NotionDatabase {
         }
     }
 
-    public async SetDaily(task:Task){
+    public async SetDaily(task:PageObjectResponse){
         try{
             const options = {
                 "Completed At":{
@@ -115,7 +105,8 @@ class Tasks extends NotionDatabase {
             console.log('error in SetDaily')
         }
     }
-    public async SetWeekly(task:Task){
+
+    public async SetWeekly(task:PageObjectResponse){
         try{
             const options = {
                 "Completed At":{
@@ -130,7 +121,7 @@ class Tasks extends NotionDatabase {
             console.log('error in SetWeekly')
         }
     }
-    public async SetMonthly(task:Task){
+    public async SetMonthly(task:PageObjectResponse){
         try{
             const options = {
                 "Completed At":{
@@ -146,7 +137,7 @@ class Tasks extends NotionDatabase {
         }
     }
 
-    public async SetCompletedAt(task: Task){
+    public async SetCompletedAt(task: PageObjectResponse){
         try{
             const options = {
                 "Completed At":{
@@ -162,104 +153,174 @@ class Tasks extends NotionDatabase {
         }
     }
 
-    public async SetPillarOnTask(task: Task){
+    public async SetPillarOnTask(task: PageObjectResponse){
         try{
-            const projectId = task.properties.Project.relation[0]?.id;
+            const projectId = this.GetProject(task);
             if(projectId){
                 const project = await this.getPage(projectId) as any;
                 const pillarId = project.properties.Pillars.relation[0]?.id
                 if(pillarId){
                     this.addPillarToTask(task.id, pillarId);
                 }else{
-                    console.warn(`${project.properties.Name.title[0].plain_text} does not have a Pillar assigned`)
+                    console.warn(`${this.GetTitle(project)} does not have a Pillar assigned`)
                 }
             }else{
-                console.warn(`${task.properties.Title.title[0].plain_text} doesnt have a project assigned`)
+                console.warn(`${this.GetTitle(task)} doesnt have a project assigned`)
             }
         }catch(e){
             console.log('error in SetPillarOnTask')
         }
     }
 
-    private flaggedForCompletedAt(task: Task): boolean{
-        return this.isDone(task) && !task.properties["Completed At"].date?.start;
+    private flaggedForCompletedAt(task: PageObjectResponse): boolean{
+        return this.isDone(task) && !this.HasCompletedAt(task)
     }
 
-    private flaggedForDailyReset(task: Task): boolean{
+    private flaggedForDailyReset(task: PageObjectResponse): boolean{
         return this.isDaily(task) && this.isReadyForDailyReset(task) && this.isDone(task) && this.hasCompletedTimestampFromPreviousDay(task)
     }
-    private flaggedForWeeklyReset(task: Task): boolean{
+    private flaggedForWeeklyReset(task: PageObjectResponse): boolean{
         return this.isWeekly(task) && this.isReadyForWeeklyReset(task) && this.isDone(task) && this.hasCompletedTimestampFromPreviousWeek(task)
     }
-    private flaggedForMonthlyReset(task: Task): boolean{
+    private flaggedForMonthlyReset(task: PageObjectResponse): boolean{
         return this.isMonthly(task) && this.isReadyForMonthlyReset(task) && this.isDone(task) && this.hasCompletedTimestampFromPreviousMonth(task)
     }
 
-    private flaggedForPillar(task: Task): boolean{
-        const pillarIsEmpty = task.properties.Pillar.relation.length === 0
-        return pillarIsEmpty && !this.isDone(task);
+    private flaggedForPillar(task: PageObjectResponse): boolean{
+        return !this.HasPillar(task) && !this.isDone(task);
     }
 
-    private flaggedForSyncParent(task:Task){
-        return task.properties["Sub-Tasks"].relation.length > 0;
+    private flaggedForSyncParent(task:PageObjectResponse){
+        return this.HasSubTasks(task);
     }
 
+    private HasSubTasks(task:PageObjectResponse){
+        if(task.properties["Sub-Tasks"].type === 'relation'){
+            return !!task.properties["Sub-Tasks"].relation.length
+        }
+        return false;
+    }
+
+    private HasProject(task:PageObjectResponse){
+        if(task.properties.Project.type === 'relation'){
+            return !!task.properties.Project.relation.length
+        }
+        return false;
+    }
+    private HasPillar(task:PageObjectResponse){
+        if(task.properties.Pillar.type === 'relation'){
+            return !!task.properties.Pillar.relation.length
+        }
+        return false;
+    }
+
+    private HasCompletedAt(task:PageObjectResponse){
+        if(task.properties["Completed At"].type === 'date'){
+            return !!task.properties["Completed At"].date?.start;
+        }
+        return false;
+    }
+
+    private HasFrequencyInput(task:PageObjectResponse){
+        if(task.properties["Frequency Input"].type === 'date'){
+            return !!task.properties["Frequency Input"].date?.start;
+        }
+        return false;
+    }
+    private GetProject(task:PageObjectResponse){
+        if(task.properties.Project.type === 'relation'){
+            return task.properties.Project.relation[0].id;
+        }
+        return null;
+    }
+    private GetFrequencyInput(task:PageObjectResponse):string{
+        if(task.properties["Frequency Input"].type === 'date'){
+            return task.properties["Frequency Input"].date ?task.properties["Frequency Input"].date.start : '';
+        }
+        return '';
+    }
+    private GetTitle(task:PageObjectResponse){
+        if(task.properties.Title.type === 'title'){
+            return task.properties.Title.title[0].plain_text;
+        }
+        return '';
+    }
+    private GetCompletedAt(task:PageObjectResponse){
+        if(task.properties["Completed At"].type === 'date'){
+            return task.properties["Completed At"].date ? task.properties["Completed At"].date.start : '';
+        }
+        return '';
+    }
     // check for task completed yesterday or today before 3am
-    private hasCompletedTimestampFromPreviousDay(task: Task){
-        const dateString = task.properties["Completed At"].date?.start;
+    private hasCompletedTimestampFromPreviousDay(task: PageObjectResponse){
+        const dateString = this.GetCompletedAt(task);
         const date = dateString ? new Date(dateString) : false; 
         return date && (!this.isToday(date)||(this.isToday(date) && date.getHours()<4));
     }
-    private hasCompletedTimestampFromPreviousWeek(task: Task){
-        const date = task.properties["Completed At"].date?.start;
+    private hasCompletedTimestampFromPreviousWeek(task: PageObjectResponse){
+        const dateString = this.GetCompletedAt(task);
+        const date = dateString ? new Date(dateString) : false; 
         return date && !this.isThisWeek(date);
     }
-    private hasCompletedTimestampFromPreviousMonth(task: Task){
-        const date = task.properties["Completed At"].date?.start;
+    private hasCompletedTimestampFromPreviousMonth(task: PageObjectResponse){
+        const dateString = this.GetCompletedAt(task);
+        const date = dateString ? new Date(dateString) : false; 
         return date && !this.isThisMonth(date);
     }
 
-    private isDone(task: Task){
-        return task.properties.Status?.status?.name === 'Done';
+    private isDone(task: PageObjectResponse){
+        if(task.properties.Status.type === 'status'){
+            return task.properties.Status.status?.name === 'Done';
+        } 
+        return false;
     }
 
-    private isReadyForDailyReset(task: Task){
-        if(task.properties['Frequency Input'].date?.start && task.properties.Recurring.select?.name === 'Daily'){
-            return this.timeHasPast(new Date(task.properties['Frequency Input'].date.start))
+    private isReadyForDailyReset(task: PageObjectResponse){
+        if(this.HasFrequencyInput(task) && this.isDaily(task)){
+            return this.timeHasPast(new Date(this.GetFrequencyInput(task)))
         }else{
-            console.log(`Recurring task, "${task.properties.Title.title[0].plain_text}" does not have Frequency Input set, or has invalid 'Recurring' value!`)
+            console.log(`Recurring task, "${this.GetTitle(task)}" does not have Frequency Input set, or has invalid 'Recurring' value!`)
         }
         return false
     }
 
-    private isReadyForWeeklyReset(task:Task){
-        if(task.properties['Frequency Input'].date && task.properties.Recurring.select?.name === 'Weekly'){
-            return this.weekDayHasPast(new Date(task.properties['Frequency Input'].date.start))
+    private isReadyForWeeklyReset(task:PageObjectResponse){
+        if(this.HasFrequencyInput(task) && this.isWeekly(task)){
+            return this.weekDayHasPast(new Date(this.GetFrequencyInput(task)))
         }else{
-            console.log(`Recurring task, "${task.properties.Title.title[0].plain_text}" does not have Frequency Input set, or has invalid 'Recurring' value!`)
+            console.log(`Recurring task, "${this.GetTitle(task)}" does not have Frequency Input set, or has invalid 'Recurring' value!`)
         }
         return false
     }
 
-    private isReadyForMonthlyReset(task:Task){
-        if(task.properties['Frequency Input'].date && task.properties.Recurring.select?.name === 'Monthly'){
-            return this.dateHasPast(new Date(task.properties['Frequency Input'].date.start))
+    private isReadyForMonthlyReset(task:PageObjectResponse){
+        if(this.HasFrequencyInput(task) && this.isMonthly(task)){
+            return this.dateHasPast(new Date(this.GetFrequencyInput(task)))
         }else{
-            console.log(`Recurring task, "${task.properties.Title.title[0].plain_text}" does not have Frequency Input set, or has invalid 'Recurring' value!`)
+            console.log(`Recurring task, "${this.GetTitle(task)}" does not have Frequency Input set, or has invalid 'Recurring' value!`)
         }
         return false
     }
 
-    private isDaily(task: Task){
-        return task.properties.Recurring?.select?.name === 'Daily'
+    private isDaily(task: PageObjectResponse){
+        if(task.properties.Recurring.type === 'select'){
+            return task.properties.Recurring?.select?.name === 'Daily'
+        }
+        return false;
     }
 
-    private isWeekly(task: Task){
-        return task.properties.Recurring?.select?.name === 'Weekly'
+    private isWeekly(task: PageObjectResponse){
+        if(task.properties.Recurring.type === 'select'){
+            return task.properties.Recurring?.select?.name === 'Weekly'
+        }
+        return false;
     }
 
-    private isMonthly(task: Task){
-        return task.properties.Recurring?.select?.name === 'Monthly'
+    private isMonthly(task: PageObjectResponse){
+        if(task.properties.Recurring.type === 'select'){
+            return task.properties.Recurring?.select?.name === 'Monthly'
+        }
+        return false;
     }
 
     private timeHasPast(date:Date){

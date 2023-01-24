@@ -1,17 +1,20 @@
 import { Client } from '@notionhq/client';
-import { billsDatabaseId, billFilter } from '../config';
-import Queue from '../Queue';
-import { Bill } from '../types/Bill';
+import { billsDatabaseId } from '../config';
 import NotionDatabase from './NotionDatabase';
 
 class Bills extends NotionDatabase{
-    constructor(client:Client, queue: Queue){
-        super(client, queue, billsDatabaseId);
+    constructor(client:Client){
+        super(client, billsDatabaseId);
     }
 
-    public async GenerateMessagesForQueue(notionResp: any):Promise<void>{
-        for(const task of notionResp.results as Bill[]){
-        }
+    public override async handleUpdate(){
+        throw new Error("Not Implemented")
+    }
+    public override async handleCreate(){
+        throw new Error("Not Implemented")
+    }
+    public override async handleDelete(){
+        throw new Error("Not Implemented")
     }
 }
 

@@ -1,19 +1,22 @@
 import { Client } from '@notionhq/client';
-import { booksDatabaseId, bookFilter } from '../config';
-import Queue from '../Queue';
-import { Book } from '../types/Book';
+import { booksDatabaseId } from '../config';
 import NotionDatabase from './NotionDatabase';
 
 // reach out to openlibrary, get covers + metadata + cleanup
 
 class Books extends NotionDatabase{
-    constructor(client:Client, queue: Queue){
-        super(client, queue, booksDatabaseId);
+    constructor(client:Client){
+        super(client, booksDatabaseId);
     }
 
-    public async GenerateMessagesForQueue(notionResp: any):Promise<void>{
-        for(const task of notionResp.results as Book[]){
-        }
+    public override async handleUpdate(){
+        throw new Error("Not Implemented")
+    }
+    public override async handleCreate(){
+        throw new Error("Not Implemented")
+    }
+    public override async handleDelete(){
+        throw new Error("Not Implemented")
     }
 }
 

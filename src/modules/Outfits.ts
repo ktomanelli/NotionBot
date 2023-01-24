@@ -1,12 +1,10 @@
 import { Client } from '@notionhq/client';
-import { booksDatabaseId } from '../config';
+import { outfitsDatabaseId } from '../config';
 import NotionDatabase from './NotionDatabase';
 
-// get images from links if preset and set at thumbnail
-
-class Clothes extends NotionDatabase{
+class Outfits extends NotionDatabase{
     constructor(client:Client){
-        super(client, booksDatabaseId);
+        super(client, outfitsDatabaseId);
     }
 
     public override async handleUpdate(){
@@ -20,4 +18,4 @@ class Clothes extends NotionDatabase{
     }
 }
 
-export default Clothes;
+export default Outfits;

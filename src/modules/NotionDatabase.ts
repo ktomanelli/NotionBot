@@ -1,15 +1,11 @@
 import {Client} from '@notionhq/client';
-import { QueryDatabaseParameters } from '@notionhq/client/build/src/api-endpoints';
-import { QueueMessage } from '../types/QueueMessage';
-import Queue from '../Queue';
+import { PageObjectResponse } from '@notionhq/client/build/src/api-endpoints';
 
 class NotionDatabase{
     protected client;
-    protected queue;
     private databaseId;
-    constructor(client:Client, queue: Queue, database_id: string){
+    constructor(client:Client, database_id: string){
         this.client = client;
-        this.queue = queue;
         if(database_id){
             this.databaseId = database_id;
         } else {
@@ -17,37 +13,24 @@ class NotionDatabase{
         }
     }
 
-    public async PutMessageOnQueue(message: QueueMessage){
-        this.queue.push(message)
-    }
-
-    public async LookForWorkAndAddWorkToQueue(filter:any): Promise<void>{
-        try{
-            if(filter){
-                const result = await this.client.databases.query({
-                    database_id: this.databaseId,
-                    filter
-                });
-                return this.GenerateMessagesForQueue(result);
-            }
-        }catch(e){
-            console.log('error in NotionDatabase.LookForWork',e);
-            throw e;
-        }
-    }
-
-    public async GenerateMessagesForQueue(notionResp: any):Promise<void>{
-        throw new Error('method to be overriden');
-    }
-
-    protected async getPage(page_id: string){
+    protected async getPage(page_id: string): Promise<PageObjectResponse>{
         const page = await this.client.pages.retrieve({page_id});
-        return page;
+        return page as PageObjectResponse;
     }
 
-    protected async updatePage(page_id:string, options:any){
+    protected async updatePage(page_id:string, options:any): Promise<PageObjectResponse>{
         const page = await this.client.pages.update({page_id,properties:options});
-        return page;
+        return page as PageObjectResponse;
+    }
+
+    public async handleUpdate(page:PageObjectResponse){
+        throw new Error("Not Implemented")
+    }
+    public async handleCreate(page:PageObjectResponse){
+        throw new Error("Not Implemented")
+    }
+    public async handleDelete(page:PageObjectResponse){
+        throw new Error("Not Implemented")
     }
 }
 
